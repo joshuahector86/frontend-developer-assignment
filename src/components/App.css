@@ -1,0 +1,31 @@
+.email-display {
+  display: flex;
+  justify-content: center;
+  gap: 15rem;
+  padding: 1rem;
+}
+
+.recipient-box {
+  border: 1px black;
+  border-style: solid;
+  padding: 1rem;
+  width: 20rem;
+  height: 30rem;
+}
+
+.recipient-inner-box {
+  padding: 2rem;
+  border: 1px black;
+  border-style: solid;
+  width: 80%;
+  height: 60%;
+  overflow-y: auto;
+}
+
+h5 {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
