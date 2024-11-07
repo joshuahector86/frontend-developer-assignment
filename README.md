@@ -16,6 +16,7 @@ Use the included `recipientsData.json` file to populate the lists within the com
 ### Use cases
 
 As a user, I can
+
 - See the list of all available recipients. A recipient is either an email or a group of emails sharing the same company domain
 - Select an individual recipient or a company domain. When a company domain is selected, all emails with the domain are added to the selected recipients' list
 - Enter the name of a company into the autocomplete and select a recipient from the available suggestions
@@ -26,14 +27,23 @@ As a user, I can
 ### The rules
 
 - The component should have a simple and clean design
-- You can use a component library of your choice (we use Chakra UI) 
+- You can use a component library of your choice (we use Chakra UI)
 - The component should work in the latest Chrome on Mac OS
 - We don't expect a full test coverage, but a couple of unit tests would be nice to have
 - Fork the repo to your own account, make it public and send us the repo url when you are completed. We will
   clone and run the site on our local.
 
-
   ### Dimitri Hector Notes - November 6, 2024
+
 - The assignment meets all the criteria as laid out
-- Additional things that I would add if this was a commerical piece of software in a professional development environment are the following: More expansive unit testing that covers all functions and pieces of the application, Split the application into more files and include a helper.ts file that is in charge of holding more beefy logic functions, I would use Zustand to overcome state management issues, I would add an automatic toggle to the chevron icons on addition of new email or change of state  of email between the lists, Include an invalid error email error message with example if the user attempted to add an email that did not meet the format standards, clear the inputs on select or click off. Some of these things are not done due to the nature of the assignment and the complexity  that can be easily introduced when adding too many features. These choices were made with the knowledge that this is just to see my skills as a developer and not for production level code.
+- Additional things that I would add if this was a commerical piece of software in a professional development environment are the following:
+- More expansive unit testing that covers all functions and pieces of the application
+- Split the application into more files and include a helper.ts file that is in charge of holding more beefy logic functions
+- I would use Zustand to overcome state management issues
+- I would add an automatic toggle to the chevron icons on addition of new email or change of state of email between the lists
+- Include an invalid error email error message with example if the user attempted to add an email that did not meet the format standards
+- clear the inputs on select or click off.
+
+Some of these things are not done due to the nature of the assignment and the complexity that can be easily introduced when adding too many features. These choices were made with the knowledge that this is just to see my skills as a developer and not for production level code.
+
 - A live vercel version of the site can be found [here](https://frontend-developer-assignment-gilt.vercel.app/).
