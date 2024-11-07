@@ -171,6 +171,7 @@ const App = () => {
           </div>
         </div>
       </div>
+      <p>Dimitri Hector - Novemeber 2024</p>
     </div>
   );
 };
