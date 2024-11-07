@@ -5,12 +5,9 @@
     "sourceMap": true,
     "jsx": "react-jsx",
     "esModuleInterop": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "downlevelIteration": true // Enable downlevel iteration for Set and Map
   },
-  "exclude": [
-    "node_modules"
-  ],
-  "include": [
-    "src",
-  ],
+  "exclude": ["node_modules"],
+  "include": ["src"]
 }

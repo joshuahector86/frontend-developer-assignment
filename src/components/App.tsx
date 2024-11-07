@@ -13,34 +13,31 @@ const App = () => {
 
   const [recipients, setRecipients] = useState<Recipient[]>(data);
   const [inputValue, setInputValue] = useState("");
-  const [expandedAvailableDomains, setExpandedAvailableDomains] = useState<
-    Set<string>
-  >(new Set());
-  const [expandedSelectedDomains, setExpandedSelectedDomains] = useState<
-    Set<string>
-  >(new Set());
+  const [expandedDomains, setExpandedDomains] = useState<{
+    available: Set<string>;
+    selected: Set<string>;
+  }>({ available: new Set(), selected: new Set() });
+
+  const toggleDomainExpansion = (
+    domain: string,
+    type: "available" | "selected"
+  ) => {
+    setExpandedDomains((prev) => ({
+      ...prev,
+      [type]: prev[type].has(domain)
+        ? new Set([...prev[type]].filter((d) => d !== domain))
+        : new Set([...prev[type], domain]),
+    }));
+  };
 
   const addNewEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (emailRegex.test(email)) {
-      const emailExists = recipients.some(
-        (recipient) => recipient.email === email
-      );
-      if (!emailExists) {
-        setRecipients((prev) => [...prev, { email, isSelected: false }]);
-      }
+    if (
+      emailRegex.test(email) &&
+      !recipients.some((recipient) => recipient.email === email)
+    ) {
+      setRecipients((prev) => [...prev, { email, isSelected: false }]);
     }
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === "Enter" && inputValue) {
-      addNewEmail(inputValue);
-      setInputValue("");
-    }
-  };
-
-  const handleInputChange = (_event: any, newInputValue: string) => {
-    setInputValue(newInputValue);
   };
 
   const handleSelectionChange = (_event: any, value: Recipient | null) => {
@@ -54,21 +51,14 @@ const App = () => {
     }
   };
 
-  const handleDomainDeselect = (domain: string) => {
+  const handleDomainChange = (
+    domain: string,
+    action: "select" | "deselect"
+  ) => {
     setRecipients((prev) =>
       prev.map((recipient) =>
         recipient.email.endsWith(`@${domain}`)
-          ? { ...recipient, isSelected: false }
-          : recipient
-      )
-    );
-  };
-
-  const handleDomainReselect = (domain: string) => {
-    setRecipients((prev) =>
-      prev.map((recipient) =>
-        recipient.email.endsWith(`@${domain}`)
-          ? { ...recipient, isSelected: true }
+          ? { ...recipient, isSelected: action === "select" }
           : recipient
       )
     );
@@ -77,51 +67,29 @@ const App = () => {
   const groupedEmails = recipients.reduce(
     (acc: Record<string, Recipient[]>, recipient) => {
       const domain = recipient.email.split("@")[1];
-      if (!acc[domain]) {
-        acc[domain] = [];
-      }
+      acc[domain] = acc[domain] || [];
       acc[domain].push(recipient);
       return acc;
     },
     {}
   );
 
-  // Toggle the expansion of a domain's email list in Available Recipients
-  const handleAvailableDomainToggle = (domain: string) => {
-    setExpandedAvailableDomains((prev) => {
-      const newExpandedDomains = new Set(prev);
-      if (newExpandedDomains.has(domain)) {
-        newExpandedDomains.delete(domain);
-      } else {
-        newExpandedDomains.add(domain);
-      }
-      return newExpandedDomains;
-    });
-  };
-
-  // Toggle the expansion of a domain's email list in Selected Recipients
-  const handleSelectedDomainToggle = (domain: string) => {
-    setExpandedSelectedDomains((prev) => {
-      const newExpandedDomains = new Set(prev);
-      if (newExpandedDomains.has(domain)) {
-        newExpandedDomains.delete(domain);
-      } else {
-        newExpandedDomains.add(domain);
-      }
-      return newExpandedDomains;
-    });
-  };
   return (
     <div>
       <TimescaleLogo />
       <div className="email-display">
+        {/* Available Recipients */}
         <div className="recipient-box">
           <h4>Available Recipients</h4>
           <Autocomplete
             options={recipients.filter((recipient) => !recipient.isSelected)}
             getOptionLabel={(option) => option.email || ""}
-            onInputChange={handleInputChange}
-            onKeyDown={handleKeyDown}
+            onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
+            onKeyDown={(event) =>
+              event.key === "Enter" &&
+              inputValue &&
+              (addNewEmail(inputValue), setInputValue(""))
+            }
             onChange={handleSelectionChange}
             renderInput={(params) => <TextField {...params} label="Search" />}
           />
@@ -129,26 +97,29 @@ const App = () => {
             {Object.keys(groupedEmails).map((domain) => (
               <div key={domain}>
                 <h5>
-                  <Button onClick={() => handleAvailableDomainToggle(domain)}>
-                    {expandedAvailableDomains.has(domain) ? (
+                  <Button
+                    onClick={() => toggleDomainExpansion(domain, "available")}
+                  >
+                    {expandedDomains.available.has(domain) ? (
                       <ChevronRight />
                     ) : (
                       <ChevronDown />
                     )}
                   </Button>
                   {domain.toUpperCase()}
-                  <Button onClick={() => handleDomainReselect(domain)}>
-                    <PlusIcon />
+                  <Button
+                    size="small"
+                    onClick={() => handleDomainChange(domain, "select")}
+                  >
+                    Add
                   </Button>
                 </h5>
-                {!expandedAvailableDomains.has(domain) && (
+                {!expandedDomains.available.has(domain) && (
                   <ul>
                     {groupedEmails[domain].map((recipient) =>
                       !recipient.isSelected ? (
                         <div key={recipient.email}>{recipient.email}</div>
-                      ) : (
-                        ""
-                      )
+                      ) : null
                     )}
                   </ul>
                 )}
@@ -157,6 +128,7 @@ const App = () => {
           </div>
         </div>
 
+        {/* Selected Recipients */}
         <div className="recipient-box">
           <h4>Selected Recipients</h4>
           <Autocomplete
@@ -169,8 +141,10 @@ const App = () => {
             {Object.keys(groupedEmails).map((domain) => (
               <div key={domain}>
                 <h5>
-                  <Button onClick={() => handleSelectedDomainToggle(domain)}>
-                    {expandedSelectedDomains.has(domain) ? (
+                  <Button
+                    onClick={() => toggleDomainExpansion(domain, "selected")}
+                  >
+                    {expandedDomains.selected.has(domain) ? (
                       <ChevronRight />
                     ) : (
                       <ChevronDown />
@@ -178,20 +152,17 @@ const App = () => {
                   </Button>
                   {domain.toUpperCase()}
                   <Button
-                    size="small"
-                    onClick={() => handleDomainDeselect(domain)}
+                    onClick={() => handleDomainChange(domain, "deselect")}
                   >
                     <Trash />
                   </Button>
                 </h5>
-                {!expandedSelectedDomains.has(domain) && (
+                {!expandedDomains.selected.has(domain) && (
                   <ul>
                     {groupedEmails[domain].map((recipient) =>
                       recipient.isSelected ? (
                         <div key={recipient.email}>{recipient.email}</div>
-                      ) : (
-                        ""
-                      )
+                      ) : null
                     )}
                   </ul>
                 )}
