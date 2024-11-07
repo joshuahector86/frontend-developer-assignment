@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { ReactComponent as TimescaleLogo } from "../assets/logo.svg";
 import "./App.css";
 import data from "../assets/recipientsData.json";
 import { Autocomplete, Button, TextField } from "@mui/material";
-import { PlusIcon, Trash } from "lucide-react";
+import { ChevronDown, ChevronRight, PlusIcon, Trash } from "lucide-react";
 
 const App = () => {
   interface Recipient {
@@ -13,8 +13,36 @@ const App = () => {
 
   const [recipients, setRecipients] = useState<Recipient[]>(data);
   const [inputValue, setInputValue] = useState("");
+  const [expandedAvailableDomains, setExpandedAvailableDomains] = useState<
+    Set<string>
+  >(new Set());
+  const [expandedSelectedDomains, setExpandedSelectedDomains] = useState<
+    Set<string>
+  >(new Set());
 
-  // Toggle isSelected status
+  const addNewEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (emailRegex.test(email)) {
+      const emailExists = recipients.some(
+        (recipient) => recipient.email === email
+      );
+      if (!emailExists) {
+        setRecipients((prev) => [...prev, { email, isSelected: false }]);
+      }
+    }
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "Enter" && inputValue) {
+      addNewEmail(inputValue);
+      setInputValue("");
+    }
+  };
+
+  const handleInputChange = (_event: any, newInputValue: string) => {
+    setInputValue(newInputValue);
+  };
+
   const handleSelectionChange = (_event: any, value: Recipient | null) => {
     if (value) {
       const updatedRecipients = recipients.map((recipient) =>
@@ -26,87 +54,74 @@ const App = () => {
     }
   };
 
-  // Add new email if it does not exist in recipients
-  const addNewEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (emailRegex.test(email)) {
-      // Check if email already exists
-      const emailExists = recipients.some(
-        (recipient) => recipient.email === email
-      );
-      if (!emailExists) {
-        setRecipients((prev) => [...prev, { email, isSelected: false }]);
-      }
-    }
-  };
-  // Handle Enter key and onBlur event to add email and domain
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === "Enter" && inputValue) {
-      addNewEmail(inputValue); // Only add when Enter is pressed
-      setInputValue(""); // Clear input after adding
-    }
+  const handleDomainDeselect = (domain: string) => {
+    setRecipients((prev) =>
+      prev.map((recipient) =>
+        recipient.email.endsWith(`@${domain}`)
+          ? { ...recipient, isSelected: false }
+          : recipient
+      )
+    );
   };
 
-  // Handle blur event to add email and domain
-  const handleBlur = () => {
-    if (inputValue) {
-      addNewEmail(inputValue); // Only add when input is finalized
-      setInputValue(""); // Clear input after adding
-    }
+  const handleDomainReselect = (domain: string) => {
+    setRecipients((prev) =>
+      prev.map((recipient) =>
+        recipient.email.endsWith(`@${domain}`)
+          ? { ...recipient, isSelected: true }
+          : recipient
+      )
+    );
   };
 
-  // Handle input change
-  const handleInputChange = (_event: any, newInputValue: string) => {
-    setInputValue(newInputValue);
-  };
-
-  // Group emails by domain
-  const groupedEmails = useMemo(() => {
-    return recipients.reduce((acc: Record<string, Recipient[]>, recipient) => {
+  const groupedEmails = recipients.reduce(
+    (acc: Record<string, Recipient[]>, recipient) => {
       const domain = recipient.email.split("@")[1];
       if (!acc[domain]) {
         acc[domain] = [];
       }
       acc[domain].push(recipient);
       return acc;
-    }, {});
-  }, [recipients]);
+    },
+    {}
+  );
 
-  // Deselect all recipients under a specific domain
-  const handleDomainDeselect = (domain: string) => {
-    const updatedRecipients = recipients.map((recipient) =>
-      recipient.email.endsWith(`@${domain}`)
-        ? { ...recipient, isSelected: false }
-        : recipient
-    );
-    setRecipients(updatedRecipients);
+  // Toggle the expansion of a domain's email list in Available Recipients
+  const handleAvailableDomainToggle = (domain: string) => {
+    setExpandedAvailableDomains((prev) => {
+      const newExpandedDomains = new Set(prev);
+      if (newExpandedDomains.has(domain)) {
+        newExpandedDomains.delete(domain);
+      } else {
+        newExpandedDomains.add(domain);
+      }
+      return newExpandedDomains;
+    });
   };
 
-  // Reselect all recipients under a specific domain
-  const handleDomainReselect = (domain: string) => {
-    const updatedRecipients = recipients.map((recipient) =>
-      recipient.email.endsWith(`@${domain}`)
-        ? { ...recipient, isSelected: true }
-        : recipient
-    );
-    setRecipients(updatedRecipients);
+  // Toggle the expansion of a domain's email list in Selected Recipients
+  const handleSelectedDomainToggle = (domain: string) => {
+    setExpandedSelectedDomains((prev) => {
+      const newExpandedDomains = new Set(prev);
+      if (newExpandedDomains.has(domain)) {
+        newExpandedDomains.delete(domain);
+      } else {
+        newExpandedDomains.add(domain);
+      }
+      return newExpandedDomains;
+    });
   };
-
   return (
     <div>
       <TimescaleLogo />
       <div className="email-display">
-        {/* ---------------------------- AVAILABLE RECIPIENTS ---------------------------- */}
         <div className="recipient-box">
           <h4>Available Recipients</h4>
           <Autocomplete
-            options={recipients
-              .filter((recipient) => !recipient.isSelected)
-              .map((recipient) => recipient)}
+            options={recipients.filter((recipient) => !recipient.isSelected)}
             getOptionLabel={(option) => option.email || ""}
             onInputChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            onBlur={handleBlur}
             onChange={handleSelectionChange}
             renderInput={(params) => <TextField {...params} label="Search" />}
           />
@@ -114,32 +129,38 @@ const App = () => {
             {Object.keys(groupedEmails).map((domain) => (
               <div key={domain}>
                 <h5>
+                  <Button onClick={() => handleAvailableDomainToggle(domain)}>
+                    {expandedAvailableDomains.has(domain) ? (
+                      <ChevronRight />
+                    ) : (
+                      <ChevronDown />
+                    )}
+                  </Button>
                   {domain.toUpperCase()}
                   <Button onClick={() => handleDomainReselect(domain)}>
                     <PlusIcon />
                   </Button>
                 </h5>
-                <ul>
-                  {groupedEmails[domain].map((recipient) =>
-                    !recipient.isSelected ? (
-                      <div key={recipient.email}>{recipient.email}</div>
-                    ) : (
-                      ""
-                    )
-                  )}
-                </ul>
+                {!expandedAvailableDomains.has(domain) && (
+                  <ul>
+                    {groupedEmails[domain].map((recipient) =>
+                      !recipient.isSelected ? (
+                        <div key={recipient.email}>{recipient.email}</div>
+                      ) : (
+                        ""
+                      )
+                    )}
+                  </ul>
+                )}
               </div>
             ))}
           </div>
         </div>
 
-        {/* ---------------------------- SELECTED RECIPIENTS ---------------------------- */}
         <div className="recipient-box">
           <h4>Selected Recipients</h4>
           <Autocomplete
-            options={recipients
-              .filter((recipient) => recipient.isSelected)
-              .map((recipient) => recipient)}
+            options={recipients.filter((recipient) => recipient.isSelected)}
             getOptionLabel={(option) => option.email || ""}
             onChange={handleSelectionChange}
             renderInput={(params) => <TextField {...params} label="Remove" />}
@@ -148,6 +169,13 @@ const App = () => {
             {Object.keys(groupedEmails).map((domain) => (
               <div key={domain}>
                 <h5>
+                  <Button onClick={() => handleSelectedDomainToggle(domain)}>
+                    {expandedSelectedDomains.has(domain) ? (
+                      <ChevronRight />
+                    ) : (
+                      <ChevronDown />
+                    )}
+                  </Button>
                   {domain.toUpperCase()}
                   <Button
                     size="small"
@@ -156,15 +184,17 @@ const App = () => {
                     <Trash />
                   </Button>
                 </h5>
-                <ul>
-                  {groupedEmails[domain].map((recipient) =>
-                    recipient.isSelected ? (
-                      <div key={recipient.email}>{recipient.email}</div>
-                    ) : (
-                      ""
-                    )
-                  )}
-                </ul>
+                {!expandedSelectedDomains.has(domain) && (
+                  <ul>
+                    {groupedEmails[domain].map((recipient) =>
+                      recipient.isSelected ? (
+                        <div key={recipient.email}>{recipient.email}</div>
+                      ) : (
+                        ""
+                      )
+                    )}
+                  </ul>
+                )}
               </div>
             ))}
           </div>
