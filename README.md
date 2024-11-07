@@ -31,3 +31,8 @@ As a user, I can
 - We don't expect a full test coverage, but a couple of unit tests would be nice to have
 - Fork the repo to your own account, make it public and send us the repo url when you are completed. We will
   clone and run the site on our local.
+
+
+  ### Dimitri Hector Notes And Instructions
+- The assignment meets all the criteria as laid out
+- Additional things that I would add if this was a commerical piece of software in a professional development environment are the following: More expansive unit testing that covers all functions and pieces of the application, Split the application into more files and include a helper.ts file that is in charge of holding more beefy logic functions, I would use Zustand to overcome state management issues, I would add an automatic toggle to the chevron icons on addition of new email or change of state  of email between the lists, Include an invalid error email error message with example if the user attempted to add an email that did not meet the format standards, clear the inputs on select or click off. Some of these things are not done due to the nature of the assignment and the complexity  that can be easily introduced when adding too many features. These choices were made with the knowledge that this is just to see my skills as a developer and not for production level code. 
